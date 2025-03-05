@@ -1,0 +1,70 @@
+.accounts_box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.account_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding:2rem 5rem;
+}
+
+.account_header h1 {
+    text-transform: uppercase;
+}
+
+.account_header a {
+    display: block;
+    padding: .5rem 1rem;
+    text-decoration: none;
+    color: white;
+    border-radius: .25rem;
+    width: 10ch;
+    text-align: center;
+}
+
+.account_links {
+    display: flex;
+    gap: 2rem;
+}
+
+.account_green_link {
+    background-color: rgb(150, 228, 34);
+}
+
+.account_green_link:hover {
+    background-color: rgb(113, 170, 28);
+}
+
+.account_grey_link {
+    background-color: rgb(109, 108, 108);
+}
+
+.account_grey_link:hover {
+    background-color: rgb(85, 83, 83);
+}
+
+#list_accounts, 
+#accounts_table {
+    width: 100%;
+    max-width: 500px; 
+}
+
+#list_accounts {
+    display: flex;
+    justify-content: start;
+}
+
+#accounts_table {
+    border-collapse: collapse;
+    margin-top: 3rem;
+}
+
+#accounts_table th,
+#accounts_table td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}

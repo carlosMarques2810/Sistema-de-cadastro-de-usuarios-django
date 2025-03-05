@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block body %}
+    <div class="account_header">
+        <h1>Sistema de cadastro</h1>
+        <div class="account_links">
+            {% if user.is_authenticated %}
+                <a href="{% url 'account:profile' %}" class="account_green_link">Perfil</a>
+                <a href="{% url 'account:logout' %}" class="account_grey_link">Logout</a>
+            {% else %}
+                <a href="{% url 'account:login' %}" class="account_green_link">Singin</a>
+                <a href="{% url 'account:register' %}" class="account_grey_link">Singup</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="accounts_box">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message_container {{message.tags}}">
+                    <p  class="message_text">{{message}}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div id="list_accounts">
+            <h2>Listagem de outros usuários:</h2>
+        </div>
+        <table id="accounts_table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Nome</th>
+                    <th>Sobrenome</th>
+                    <th>Ultimo login</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                    <tr>
+                        <td>{{account.username|capfirst}}</td>
+                        <td>{{account.first_name|capfirst}}</td>
+                        <td>{{account.last_name|capfirst}}</td>
+                        <td>{% if account.last_login %} {{account.last_login|date:'d/m/Y'}} {% else %} sem dados {% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            Nenhum usuário encontrado.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

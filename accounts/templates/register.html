@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block body %}
+    <div class="container_form">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message_container {{message.tags}}">
+                    <p  class="message_text">{{message}}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="form_box">
+            <h1 class="form_title">registre-se aqui</h1>
+            <form action="{% url 'account:register' %}" method="POST" class="form_accounts">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div>
+                        {{field.label_tag}}
+                        {{field}}
+                    </div>
+                {% endfor %}
+                <div id="link_click_here">
+                    <p>Se deseja recuperar seu acesso. <a href="{% url 'account:email' %}">Clique aqui.</a></p>
+                </div>
+                <input type="submit" value="Cadastrar" class="form_submit">
+            </form>
+        </div>
+    </div>
+{% endblock %}

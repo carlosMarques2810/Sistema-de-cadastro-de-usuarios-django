@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block body %}
+    <div class="container_form">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message_container {{message.tags}}">
+                    <p  class="message_text">{{message}}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="form_box">
+            <h1 class="form_title">Atualizar aqui</h1>
+            <form action="{% url 'account:profile' %}" method="POST" class="form_accounts">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div>
+                        {{field.label_tag}}
+                        {{field}}
+                    </div>
+                {% endfor %}
+                <div id="link_click_here">
+                    <p>Se deseja alterar sua senha. <a href="{% url 'account:password' %}">Clique aqui.</a></p>
+                </div>
+                <input type="submit" value="Update" class="form_submit">
+            </form>
+        </div>
+    </div>
+{% endblock %}

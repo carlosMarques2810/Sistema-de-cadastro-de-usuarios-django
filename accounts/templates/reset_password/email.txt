@@ -1,0 +1,6 @@
+Olá {{username}}
+
+Para redefinir sua senha, click no link abaixo:
+{{url_ativacao}}
+
+Se você não solicitou essa ativação, deconsidere esse e-mail.

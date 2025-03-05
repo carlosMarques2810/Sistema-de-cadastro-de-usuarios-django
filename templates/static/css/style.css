@@ -1,0 +1,9 @@
+@import url(accounts.css);
+@import url(message_alert.css);
+@import url(account_form.css);
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}

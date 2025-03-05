@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autenticação de usuário</title>
+</head>
+<body>
+    <h1>Olá {{username}}</h1>
+    <p>Para ativar sua conta, click no link abaixo:</p>
+    <p>
+        {{url_ativacao|safe}}
+    </p>
+    <p>
+        Se você não solicitou essa ativação, deconsidere esse e-mail.
+    </p>
+</body>
+</html>
