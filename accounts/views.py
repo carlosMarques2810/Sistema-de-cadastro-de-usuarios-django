@@ -116,7 +116,6 @@ def profile(request: HttpRequest):
         errors = loads(form.errors.as_json())
         erro = ''
 
-        print(errors)
         for k, v in errors.items():
             for valor in v:
                 if valor['code'] != 'unique':
