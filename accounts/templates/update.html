@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block body %}
+<p>Deletar conta. <a href="{% url 'account:delete' %}">click aqui.</a></p>
     <div class="container_form">
         {% if messages %}
             {% for message in messages %}

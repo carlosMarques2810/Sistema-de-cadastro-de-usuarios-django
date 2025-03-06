@@ -159,3 +159,8 @@ EMAIL_HOST_PASSWORD = getenv('EMAIL_HOST_PASSWORD')
 
 # Url
 ABSOLUTE_URL = getenv('ABSOLUTE_URL')
+
+# Superuser
+SUPERUSER_USERNAME = 'superuser'
+SUPERUSER_EMAIL = 'superuser@email.com'
+SUPERUSER_PASSWORD = 'superuser1234'

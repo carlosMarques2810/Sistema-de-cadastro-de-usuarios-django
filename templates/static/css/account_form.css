@@ -4,7 +4,6 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #fce3e3;
 }
 
 .form_title {
@@ -53,10 +52,6 @@
 
 #link_click_here {
     margin-block: 1rem;
-}
-
-#link_click_here p {
-    display: inline-block;
 }
 
 .form_submit {

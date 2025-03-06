@@ -11,7 +11,7 @@ class AuthenticatedAccessMiddleware:
                 return redirect(reverse('account:accounts'))
 
         else:
-            if request.path == reverse('account:profile') or request.path == reverse('account:logout'):
+            if request.path == reverse('account:profile') or request.path == reverse('account:logout') or request.path == reverse('account:delete'):
                 return redirect(reverse('account:accounts'))
 
         response = self.get_response(request)

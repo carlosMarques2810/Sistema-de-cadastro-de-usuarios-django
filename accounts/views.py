@@ -9,6 +9,7 @@ from django.forms.models import model_to_dict
 from .utils import TokenEmailAndPassoerdResetGerator, enviar_email_html
 from django.utils.html import format_html
 from django.core.validators import ValidationError
+from django.db.models import Q
 
 User = get_user_model()
 TOKEN = TokenEmailAndPassoerdResetGerator()
@@ -28,9 +29,8 @@ def register(request: HttpRequest):
         if form.is_valid():
             if form.data.get('password') == form.data.get('passwordConfirm'):
                 singup = form.save()
-                messages.success(request, 'Conta criada, mas precisa ser ativada, verifique seu e-mail.')
 
-                return redirect(reverse('account:login'))
+                return HttpResponse('<h2>Conta criada com sucesso, mas precisa ser ativada, verifique seu e-mail.</h2>')
 
             messages.error(request, 'As senhas não conhecidem.')
             
@@ -116,6 +116,7 @@ def profile(request: HttpRequest):
         errors = loads(form.errors.as_json())
         erro = ''
 
+        print(errors)
         for k, v in errors.items():
             for valor in v:
                 if valor['code'] != 'unique':
@@ -146,17 +147,43 @@ def logout(request: HttpRequest):
 
     return redirect(reverse('account:accounts'))
 
+def delete(request: HttpRequest):
+    if request.method == 'GET':
+        if not request.user.is_authenticated:
+            redirect(reverse('account:accounts'))
+
+    else:
+        password = request.POST.get('password')
+        password = hashers.check_password(password, request.user.password)
+
+        if password:
+            request.user.delete()
+            out(request)
+            messages.success(request, 'Conta excluida com sucesso.')
+
+            return redirect(reverse('account:accounts'))
+
+        else:
+            messages.error(request, 'Senha incorreta.')
+
+    return render(request, 'confirm.html')
+
 def superuser(request: HttpRequest):
+    if request.method == "GET":
+        superuser = User.objects.filter(Q(is_staff=True) & Q(is_superuser=True))
 
+        if not superuser:
+            user = User.objects.create(username=settings.SUPERUSER_USERNAME, email=settings.SUPERUSER_EMAIL, password=hashers.make_password(settings.SUPERUSER_PASSWORD), is_staff=True, is_superuser=True, is_active=True)
+            user.save()
 
-    User = get_user_model()
-    user = User.objects.create(email='carlos@gmail.com', password=hashers.make_password('2810'), username='carlos2810', is_staff=True, is_superuser=True)
-    user.save()
-
-    return HttpResponse('Salvo com sucesso')
+            return HttpResponse(f"""<p>Superuser criado com sucesso. E-mail: {user.email} & password: {settings.SUPERUSER_PASSWORD}.
+                                    <a href='{reverse('account:login')}'>Login aqui</a></p>""")
+        else:
+            return HttpResponse('Superusuário já criado.')
 
 def email(request: HttpRequest):
-    if request.method == 'GET':
+
+    if request.method == 'GET':\
         form = AccountFormEmail
     
     else:

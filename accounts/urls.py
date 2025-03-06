@@ -8,6 +8,7 @@ urlpatterns = [
     path('auth/<int:id>/<str:token>', views.auth, name='auth'),
     path('login/', views.login, name='login'),
     path('profile/', views.profile, name='profile'),
+    path('delete/confirm/', views.delete, name='delete'),
     path('logout/', views.logout, name='logout'),
     path('search/email/', views.email, name='email'),
     path('superuser/', views.superuser, name='superuser'),
