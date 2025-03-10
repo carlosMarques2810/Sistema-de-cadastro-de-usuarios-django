@@ -1,28 +1,28 @@
 {% extends 'base.html' %}
 {% block body %}
-<p>Deletar conta. <a href="{% url 'account:delete' %}">click aqui.</a></p>
-    <div class="container_form">
+    <p class="text-lg">Deletar conta. <a href="{% url 'account:delete' %}" class="underline text-blue-700 hover:text-blue-500">click aqui.</a></p>
+    <div class="flex flex-col justify-center items-center h-screen">
         {% if messages %}
             {% for message in messages %}
-                <div class="message_container {{message.tags}}">
-                    <p  class="message_text">{{message}}</p>
+                <div class="absolute top-4 py-4 px-8 mx-auto border-2 {{message.tags}}">
+                    <p  class="text-xl">{{message}}</p>
                 </div>
             {% endfor %}
         {% endif %}
-        <div class="form_box">
-            <h1 class="form_title">Atualizar aqui</h1>
-            <form action="{% url 'account:profile' %}" method="POST" class="form_accounts">
+        <div class="flex flex-col items-center">
+            <h1 class="uppercase text-center font-semibold text-lg underline">Dados do usuário</h1>
+            <form action="{% url 'account:profile' %}" method="POST" class="p-4 bg-[#AAA] rounded-lg shadow-[0_0_5px_black] mt-8 w-[300px]">
                 {% csrf_token %}
                 {% for field in form %}
-                    <div>
-                        {{field.label_tag}}
+                    <div class="flex flex-col mt-2">
+                        <label for="{{field.id_for_label}}" class="text-md font-semibold uppercase">{{field.label}}:</label>
                         {{field}}
                     </div>
                 {% endfor %}
-                <div id="link_click_here">
-                    <p>Se deseja alterar sua senha. <a href="{% url 'account:password' %}">Clique aqui.</a></p>
+                <div class="my-4">
+                    <p class="text-base">Se deseja alterar sua senha. <a href="{% url 'account:password' %}" class="underline text-blue-700 hover:text-blue-500">Clique aqui.</a></p>
                 </div>
-                <input type="submit" value="Update" class="form_submit">
+                <input type="submit" value="Atualizar" class="bg-black/90 hover:bg-black/75 text-[#f8cfcf] block w-full cursor-pointer mt-5 p-2 mt-3 rounded">
             </form>
         </div>
     </div>

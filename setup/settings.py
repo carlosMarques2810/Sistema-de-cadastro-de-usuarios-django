@@ -144,9 +144,9 @@ AUTHENTICATION_BACKENDS = [
 from django.contrib.messages import constants as msg
 
 MESSAGE_TAGS = {
-    msg.ERROR: 'error',
-    msg.SUCCESS: 'success',
-    msg.WARNING: 'warning'
+    msg.ERROR: 'bg-red-400 border-red-600',
+    msg.SUCCESS: 'bg-green-400 border-green-600',
+    msg.WARNING: 'bg-orange-400 border-orange-600',
 }
 
 # E-mail

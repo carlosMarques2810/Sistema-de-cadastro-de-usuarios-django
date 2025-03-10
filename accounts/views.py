@@ -1,7 +1,8 @@
-from django.shortcuts import render, reverse, redirect
+from django.shortcuts import render, reverse, redirect, get_object_or_404
 from django.http import HttpRequest, HttpResponse
-from django.contrib.auth import get_user_model, login as singin, hashers, logout as out, authenticate
-from .form import AccountFormRegister, AccountFormLogin, AccountFormUpdate, AccountFormEmail
+from django.views import generic, View
+from django.contrib.auth import get_user_model, login as singin, logout as out, authenticate, views, mixins, hashers
+from .form import AccountFormRegister, AccountFormLogin, AccountFormUpdate, AccountFormEmail, AccountFormConfirm, AccountFormResetPassword
 from django.contrib import messages
 from json import loads
 from django.conf import settings
@@ -14,261 +15,220 @@ from django.db.models import Q
 User = get_user_model()
 TOKEN = TokenEmailAndPassoerdResetGerator()
 
-def accounts(request: HttpRequest):
-    if request.method == 'GET':
-        accounts = User.objects.all()
+class Accounts(generic.ListView):
+    model = User
+    template_name = 'accounts.html'
+    context_object_name = 'accounts'
 
-        return render(request, 'accounts.html', {'accounts': accounts})
+    def get_queryset(self):
+       return User.objects.all()
 
-def register(request: HttpRequest):
-    if request.method == 'GET':
-        form = AccountFormRegister()
+class Register(generic.CreateView):
+    model = User
+    form_class = AccountFormRegister
+    template_name = 'register.html'
 
-    else:
-        form = AccountFormRegister(request.POST)
-        if form.is_valid():
-            if form.data.get('password') == form.data.get('passwordConfirm'):
-                singup = form.save()
+    def form_valid(self, form):
+        if form.cleaned_data.get('password') != form.cleaned_data.get('passwordConfirm'):
+            messages.error(self.request, 'As senhas não conhecidem.')
+            return self.form_invalid(form)
+        
+        form.save()
+        return super().form_valid(form)
 
-                return HttpResponse('<h2>Conta criada com sucesso, mas precisa ser ativada, verifique seu e-mail.</h2>')
+    def form_invalid(self, form):
+        errors = loads(form.errors.as_json())
+        erro_msg = ''
+        for k, v in errors.items():
+            for valor in v:
+                if valor['code'] != 'unique':
+                    erro_msg = valor['message']
+                else:
+                    erro_msg = f'Forneça um dado valido para o campo {k}'
+        
+        if erro_msg:
+            messages.error(self.request, erro_msg)
 
-            messages.error(request, 'As senhas não conhecidem.')
-            
+        return super().form_invalid(form)
+
+
+    def get_success_url(self):
+        messages.warning(self.request, 'Conta criada com sucesso, mas precisa ser ativada, verifique seu e-mail.')
+        return reverse('account:login')
+
+class Auth(View):
+    def get(self, request, id, token):
+        try:
+            account = get_object_or_404(User, pk=id)
+            if not TOKEN.check_token(account, token):
+                raise ValidationError('Token inválido.')
+        except:
+            return HttpResponse('Certifique-se de ter copiado a url corretamente.')
         else:
-            erros = loads(form.errors.as_json())
-            erro = ''
-            
-            if erros.get('username'):
-                for e in erros.get('username'):
-                    if e['code'] == 'unique':
-                        erro = 'Digite um username válido.'
-                        break
-                    else: 
-                        erro = e['message']
-
-            elif erros.get('email'):
-                erro = 'Digite um endereço de E-mail válido.'
-
-            messages.error(request, erro)
-
-    return render(request, 'register.html', {'form': form})
-
-def auth(request: HttpRequest, id, token):
-    if request.method == 'GET':
-        account = User.objects.get(pk=id)
-        if TOKEN.check_token(account, token):
             account.is_active = True
             account.save()
-
             messages.success(request, 'Conta ativada')
             return redirect(reverse('account:login'))
 
-    return HttpResponse('<h1>Token inválido</h1>')
+        return redirect(reverse('account:accounts'))
 
-def login(request: HttpRequest):
-    if request.method == 'GET':
-        form = AccountFormLogin()
+class Login(generic.FormView):
+    template_name = 'login.html'
+    redirect_authenticated_user = True
+    form_class = AccountFormLogin
 
-    else:
-        form = AccountFormLogin(request.POST)
+    def form_valid(self, form):
+        email = form.cleaned_data.get('email')
+        password = form.cleaned_data.get('password')
+        singin(self.request, form.user)
+        return super().form_valid(form)
 
-        erros = loads(form.errors.as_json())
-        erro = ''
-
-        if erros.get('email'):
-            for e in erros.get('email'):
-                if e['code'] != 'unique':
-                    erro = e['message']
-
-                else:
-                    account = User.objects.get(email=form.data.get('email'))
-                    user = authenticate(request, username=account.email, password=form.data.get('password'))
-
-                    if user is not None:
-                        if user.is_active:
-                            singin(request, account)
-                            messages.success(request, f'Login realizado com sucesso, {user.username}.')
-
-                            return redirect(reverse('account:accounts'))
-
-                        else:
-                            messages.warning(request, 'Sua conta precisa ser ativada, verifique seu e-mail.')
-                            return redirect(reverse('account:login'))
-                    
-                    else:
-                        erro = 'Usuaário ou senha inválidos.'
-        else:
-            erro = 'Conta do usuário não encontrada'
-
-        messages.error(request, erro)
-
-    return render(request, 'login.html', {'form': form})    
-
-def profile(request: HttpRequest):
-    account = User.objects.get(email=request.user.email)
-    data = model_to_dict(account)
-
-    if request.method == 'GET':
-        form = AccountFormUpdate(initial=data)
-
-    else:
-        form = AccountFormUpdate(request.POST)
+    def form_invalid(self, form):
         errors = loads(form.errors.as_json())
-        erro = ''
+        erro_msg = ''
+        for k, v in errors.items():
+            for valor in v:
+                if valor['code'] != 'unique':
+                    erro_msg = valor['message']
+        
+        if erro_msg:
+            messages.error(self.request, erro_msg)
+
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        messages.success(self.request, 'Login realizado com sucesso')
+        return reverse('account:accounts')
+
+class Profile(generic.UpdateView):
+    model = User
+    form_class = AccountFormUpdate
+    template_name = 'update.html'
+
+    def form_invalid(self, form):
+        errors = loads(form.errors.as_json())
+        erro_msg = ''
 
         for k, v in errors.items():
             for valor in v:
                 if valor['code'] != 'unique':
-                    erro = valor['message']
-            
-                else:
-                    if form.data.get(k) == data.get(k):
-                        break
-                    else:
-                        erro = f'Forneça um dado valido para o campo {k}'
-        if not erro:
-            for field, content in form.data.items():
-                if content:
-                    setattr(account, field, content)
-            
-            account.save()
-            form = AccountFormUpdate(instance=account)
-            messages.success(request, 'Dados atualizados com sucesso')
-        else:
-            messages.error(request, erro)
+                    erro_msg = valor['message']
+        
+        messages.error(self.request, erro_msg)
+        return super().form_invalid(form)
 
-    return render(request, 'update.html', {'form': form})
-    
-def logout(request: HttpRequest):
-    if request.method == 'GET':
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def get_success_url(self):
+        messages.success(self.request, 'Cadastro atualizado com sucesso.')
+        return reverse('account:profile')
+
+class Logout(View):
+    def get(self, request):
         out(request)
-        messages.success(request, 'Sessão encerrada')
+        messages.success(request, 'Sessão encerrada.')
+        return redirect(reverse('account:accounts'))
+        
+class Delete(mixins.LoginRequiredMixin, generic.FormView):
+    model = User
+    form_class = AccountFormConfirm
+    template_name = 'delete.html'
 
-    return redirect(reverse('account:accounts'))
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
-def delete(request: HttpRequest):
-    if request.method == 'GET':
-        if not request.user.is_authenticated:
-            redirect(reverse('account:accounts'))
+    def form_valid(self, form):
+        account = self.request.user
+        out(self.request)
+        account.delete()
+        messages.success(self.request, 'Conta excluída com sucesso.')
+        return super().form_valid(form)
 
-    else:
-        password = request.POST.get('password')
-        password = hashers.check_password(password, request.user.password)
+    def form_invalid(self, form):
+        error = loads(form.errors.as_json())
+        error = error.get('password')[0]['message']
+        messages.error(self.request, error)
+        return super().form_invalid(form)
 
-        if password:
-            request.user.delete()
-            out(request)
-            messages.success(request, 'Conta excluida com sucesso.')
+    def get_success_url(self):
+        return reverse('account:accounts')
 
-            return redirect(reverse('account:accounts'))
-
-        else:
-            messages.error(request, 'Senha incorreta.')
-
-    return render(request, 'confirm.html')
-
-def superuser(request: HttpRequest):
-    if request.method == "GET":
+class Superuser(View):
+    def get(self, request):
         superuser = User.objects.filter(Q(is_staff=True) & Q(is_superuser=True))
 
         if not superuser:
             user = User.objects.create(username=settings.SUPERUSER_USERNAME, email=settings.SUPERUSER_EMAIL, password=hashers.make_password(settings.SUPERUSER_PASSWORD), is_staff=True, is_superuser=True, is_active=True)
             user.save()
-
             return HttpResponse(f"""<p>Superuser criado com sucesso. E-mail: {user.email} & password: {settings.SUPERUSER_PASSWORD}.
                                     <a href='{reverse('account:login')}'>Login aqui</a></p>""")
         else:
             return HttpResponse('Superusuário já criado.')
 
-def email(request: HttpRequest):
+class Email(generic.FormView):
+    model = User
+    form_class = AccountFormEmail
+    template_name = 'search_email.html'
 
-    if request.method == 'GET':\
-        form = AccountFormEmail
-    
-    else:
-        erro = ''
-        form = AccountFormEmail(request.POST)
-        if not form.is_valid():
-            errors = loads(form.errors.as_json())
-            for e in errors.get('email'):
-                if e['code'] != 'unique':
-                    erro = e['message']
+    def form_valid(self, form):
+        account = self.model.objects.get(email=form.cleaned_data.get('email'))
+        token = TOKEN.make_token(account)
+        url_absolute = settings.ABSOLUTE_URL + reverse('account:password') + f'?pk={account.id}&token={token}'
+        link = format_html(f'<a href="{url_absolute}">Redefinir senha</a>')
+        email = {
+            'assunto': 'Redefinição de senha',
+            'html': 'reset_password/email.html',
+            'txt': 'reset_password/email.txt'
+        }
+        enviar_email_html(account, link, email)
+        return HttpResponse('Enviamos o link de redefinição de conta, verifique seu e-mail.')
 
-                else:
-                    account = User.objects.get(email=form.data.get('email'))
-                    token = TOKEN.make_token(account)
-                    url_absolute = settings.ABSOLUTE_URL + reverse('account:password') + f'?id={account.id}&token={token}'
-                    link = format_html(f'<a href="{url_absolute}">Redefinir senha</a>')
+    def form_invalid(self, form):
+        error = loads(form.errors.as_json())
+        error = error.get('email')[0]['message']
+        messages.error(self.request, error)
+        return super().form_invalid(form)
 
-                    email = {
-                        'assunto': 'Redefinição de senha',
-                        'html': 'reset_password/email.html',
-                        'txt': 'reset_password/email.txt'
-                    }
+class Password(generic.FormView):
+    model = User
+    template_name = 'reset_password.html'
+    form_class = AccountFormResetPassword
 
-                    enviar_email_html(account, link, email)
+    def get_initial(self):
+        initial = super().get_initial()
+        pk = self.request.GET.get('pk')
+        token = self.request.GET.get('token')
+        initial['pk'] = pk
+        initial['token'] = token
+        return initial
 
-                    return HttpResponse('Enviamos o link de redefinição de conta, verifique seu e-mail.')
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        password = form.cleaned_data.get('password')
+        password = hashers.make_password(password)
+        form.user.password = password
+        form.user.save()
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        errors = loads(form.errors.as_json())
+        erro_msg = ''
+
+        for k, v in errors.items():
+            for valor in v:
+                erro_msg = valor['message']
+                break
         
-        else:
-            erro = 'Conta do usuário não encontrado.'
-        
-        messages.error(request, erro)
-    
-    return render(request, 'search_email.html', {'form': form})
+        messages.error(self.request, erro_msg)
+        return super().form_invalid(form)
 
-def password(request: HttpRequest):
-    context = {}
-    if request.method == 'GET':
-        _id = request.GET.get('id')
-        token = request.GET.get('token')
-
-        if _id or token:
-            try:
-                account = User.objects.get(pk=_id)
-                if not TOKEN.check_token(account, token):
-                    raise ValidationError('token inválido')
-                context['account'] = account
-                context['token'] = token
-            except:
-                return HttpResponse('Certifique-se que a url está correta. Ou que já tenha expirado.')
-
-        return render(request, 'reset_password.html', context)
-    
-    else:
-        erro = ''
-        _id = request.POST.get('id')
-        _token = request.POST.get('token')
-        _password = request.POST.get('password')
-        _passwordConfirm = request.POST.get('passwordConfirm')
-
-        if _password == _passwordConfirm:
-            _password == hashers.make_password(_password)
-
-            if request.user.is_authenticated:
-                request.user.password = _password
-                request.user.save()
-
-            else:
-                try:
-                    account = User.objects.get(pk=_id)
-                    if not TOKEN.check_token(account, _token):
-                        print(TOKEN.check_token(account, _token), 'Aqui')
-                        raise ValidationError('token inválido')
-                except:
-                    return HttpResponse('Certifique-se de ter copiado a url corretamente. Ou que já tenha expirado.')
-
-                else:
-                    account.password = _password
-                    account.save()
-        else:
-            erro = 'Certifique-se que as senhas sejan iguais.'
-        
-        if len(erro) > 1:
-            messages.error(request, erro)
-            if not request.user.is_authenticated:
-                return redirect(reverse('account:password') + f'?id={_id}&token={_token}')  
-        
-        else:
-            messages.success(request, 'Senha alterada com sucesso.')
-            return redirect(reverse(f'account:login'))
+    def get_success_url(self):
+        messages.success(self.request, 'Senha alterada com sucesso.')
+        return redirect(reverse('account:login'))

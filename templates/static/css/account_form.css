@@ -55,8 +55,8 @@
 }
 
 .form_submit {
-    background-color: rgba(0, 0, 0, 0.836);
-    color: rgb(248, 207, 207);
+    background-color: #000000;
+    color: #f8cfcf;
     font-weight: bolder;
     display: block;
     width: 100%;

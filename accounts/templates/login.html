@@ -1,27 +1,27 @@
 {% extends 'base.html' %}
 {% block body %}
-    <div class="container_form">
+    <div class="flex flex-col justify-center items-center h-screen">
         {% if messages %}
             {% for message in messages %}
-                <div class="message_container {{message.tags}}">
-                    <p  class="message_text">{{message}}</p>
+                <div class="absolute top-4 py-4 px-8 mx-auto border-2 {{message.tags}}">
+                    <p  class="text-xl">{{message}}</p>
                 </div>
             {% endfor %}
         {% endif %}
-        <div class="form_box">
-            <h1 class="form_title">Login aqui</h1>
-            <form action="{% url 'account:login' %}" method="POST" class="form_accounts">
+        <div class="flex flex-col items-center">
+            <h1 class="uppercase text-center font-semibold text-lg underline">Digite suas credencias</h1>
+            <form action="{% url 'account:login' %}" method="POST" class="p-4 bg-[#AAA] rounded-lg shadow-[0_0_5px_black] mt-8 w-[300px]">
                 {% csrf_token %}
                 {% for field in form %}
-                    <div>
-                        {{field.label_tag}}
+                    <div class="flex flex-col mt-2">
+                        <label for="{{field.id_for_label}}" class="text-md font-semibold uppercase">{{field.label}}:</label>
                         {{field}}
                     </div>
                 {% endfor %}
-                <div id="link_click_here">
-                    <p>Se deseja recuperar seu acesso. <a href="{% url 'account:email' %}">Clique aqui.</a></p>
+                <div class="my-4">
+                    <p class="text-base">Se deseja recuperar seu acesso. <a href="{% url 'account:email' %}" class="underline text-blue-700 hover:text-blue-500">Clique aqui.</a></p>
                 </div>
-                <input type="submit" value="Login" class="form_submit">
+                <input type="submit" value="Login" class="bg-black/90 hover:bg-black/75 text-[#f8cfcf] block w-full cursor-pointer mt-5 p-2 mt-3 rounded">
             </form>
         </div>
     </div>
